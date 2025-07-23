@@ -1,8 +1,8 @@
 import requests
 
 # Replace with your actual access token and account key
-access_token = "eyJhbGciOiJFUzI1NiIsIng1dCI6IjI3RTlCOTAzRUNGMjExMDlBREU1RTVCOUVDMDgxNkI2QjQ5REEwRkEifQ.eyJvYWEiOiI3Nzc3MCIsImlzcyI6Im9hIiwiYWlkIjoiNjYwOSIsInVpZCI6IjBZakxGMVktSktjU3NOVGhSekVFVEE9PSIsImNpZCI6IjBZakxGMVktSktjU3NOVGhSekVFVEE9PSIsImlzYSI6IkZhbHNlIiwidGlkIjoiMTE2MzYiLCJzaWQiOiI0OThjYTNkNWMyMTQ0ODY4OTRjNmMxNjMwMWQ0MDBmYyIsImRnaSI6Ijg0IiwiZXhwIjoiMTc1MzI3NjE1NCIsIm9hbCI6IjFGIiwiaWlkIjoiZWZmMzVlNzMxYWU4NDBmNTljZDAwOGRkNzEwMDk5NDAifQ.tVehMZSXqnqip7gHCVXnf-cV5VZK0uBfwMjODRilV-7S15_5gnog34ge6XtOIvkD3B4iZm9kZ0Y8thFmgSAmRQ"
-account_key = "0YjLF1Y-JKcSsNThRzEETA=="
+access_token = ""
+account_key = ""
 
 
 # API endpoint
@@ -14,7 +14,7 @@ headers = {
     "Content-Type": "application/json"
 }
 
-# Order payload for a LIMIT
+# Order payload for a LIMIT order
 payload = {
     "AccountKey": account_key,
     "Uic": 211,
