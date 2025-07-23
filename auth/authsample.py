@@ -3,8 +3,8 @@ from urllib.parse import urlencode
 from base64 import b64encode
 
 # Application details
-app_key = "6a9dc81d6e6e45249aef2b74eb78d317"
-app_secret = "f4e5fd4e37a8436e9854f00485281397"
+app_key = ""
+app_secret = ""
 redirect_uri = "http://localhost/myapp"
 auth_base_url = "https://sim.logonvalidation.net"  # Make sure this is correct
 # Generate a random state string
