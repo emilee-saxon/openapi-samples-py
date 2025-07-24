@@ -1,53 +1,90 @@
-import requests
+import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
 from urllib.parse import urlencode
 from base64 import b64encode
+import requests
+from dotenv import load_dotenv
+import streamlit
 
-# Application details
-app_key = "6a9dc81d6e6e45249aef2b74eb78d317"
-app_secret = "f4e5fd4e37a8436e9854f00485281397"
-redirect_uri = "http://localhost/myapp"
-auth_base_url = "https://sim.logonvalidation.net"  # Make sure this is correct
-# Generate a random state string
-state = "random_state_string"
+load_dotenv()
 
-# Step 1: Construct the authorization URL
-params = {
-    'response_type': 'code',
-    'client_id': app_key,
-    'redirect_uri': redirect_uri,
-    'state': state
-}
+APP_KEY = os.getenv("AppKey")
+APP_SECRET = os.getenv("AppSecret")
+REDIRECT_URL = os.getenv("RedirectUrl")
+AUTHORIZATION_URL = os.getenv("AuthorizationUrl")
+TOKEN_URL = os.getenv("TokenUrl")
 
-authorization_url = f"{auth_base_url}/authorize?{urlencode(params)}"
-print(f"Please go to this URL to authorize the application:\n{authorization_url}")
+FULL_AUTH_URL = f"{AUTHORIZATION_URL}?response_type=code&client_id={APP_KEY}&redirect_uri={REDIRECT_URL}"
 
-# Step 2: Wait for the user to paste the authorization code
-authorization_code = input("Enter the authorization code you received after login: ")
+unpacked_response = {}
 
-# Step 3: Exchange the authorization code for an access token
-token_url = f"{auth_base_url}/token"
-client_credentials = f"{app_key}:{app_secret}"
-encoded_credentials = b64encode(client_credentials.encode()).decode()
+class OAuthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+  
+        global unpacked_response
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+    
+        if path == "/":
+            print(f"\nRedirecting to authorization endpoint ({FULL_AUTH_URL}):")
+            print(unpacked_response)
+            self.send_response(302)
+            self.send_header("Location", FULL_AUTH_URL)
+            self.end_headers()
 
-token_data = {
-    'grant_type': 'authorization_code',
-    'code': authorization_code,
-    'redirect_uri': redirect_uri
-}
+        elif path == "/" + REDIRECT_URL.split("/")[-1]:
+            print("\nRequesting tokens...")
+            unpacked_response = self.get_tokens(parsed_path)
+            print("Response:")
+            print(unpacked_response)
 
-headers = {
-    'Authorization': f"Basic {encoded_credentials}",
-    'Content-Type': 'application/x-www-form-urlencoded'
-}
 
-response = requests.post(token_url, data=token_data, headers=headers)
+            print("\nRenewing tokens...")
+            unpacked_response = self.renew_tokens()
+            print("Response:")
+            print(unpacked_response)
 
-if response.status_code == 201:
-    access_token_info = response.json()
-    access_token = access_token_info.get('access_token')
-    refresh_token = access_token_info.get('refresh_token')
-    print(f"\nAccess Token: {access_token}")
-    print(f"Refresh Token: {refresh_token}")
-else:
-    print("\nFailed to obtain access token:")
-    print(response.status_code, response.text)
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"Tokens received and refreshed. Check console output.")
+
+    def get_tokens(self, parsed_path):
+        query = parse_qs(parsed_path.query)
+        code = query.get("code", [None])[0]
+
+        data = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": REDIRECT_URL,
+        }
+
+        return self.token_request(data)
+
+    def renew_tokens(self):
+        data = {
+            "grant_type": "refresh_token",
+            "refresh_token": unpacked_response.get("refresh_token"),
+            "redirect_uri": REDIRECT_URL,
+        }
+
+        return self.token_request(data)
+
+    def token_request(self, data):
+        basic_token = b64encode(f"{APP_KEY}:{APP_SECRET}".encode()).decode()
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": f"Basic {basic_token}",
+        }
+
+        response = requests.post(TOKEN_URL, headers=headers, data=urlencode(data))
+        return response.json()
+
+def run(server_class=HTTPServer, handler_class=OAuthHandler, port=3000):
+    server_address = ('', port)
+    httpd = server_class(server_address, handler_class)
+    print(f"Server is running on port {port}")
+    httpd.serve_forever()
+
+if __name__ == "__main__":
+    run()
