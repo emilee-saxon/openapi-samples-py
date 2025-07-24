@@ -5,7 +5,7 @@ import json
 # Create Streamlit components to simulate the required JavaScript elements
 def streamlit_app():
     
-    st.title("Order Type Modifier")
+    st.title("Order Type Modifier ")
 
     # Placeholder for order object
     order_object_json = '{"OrderType": "Limit", "OrderDuration": {"DurationType": "DAY"}, "AssetType": "FxSpot", "Uic": 1234}'
