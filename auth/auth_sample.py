@@ -10,11 +10,12 @@ import requests
 from dotenv import load_dotenv
 import streamlit
 
+## ENV FILE comments
 load_dotenv()
 ## for branch
 APP_KEY = os.getenv("AppKey")
 APP_SECRET = os.getenv("AppSecret")
-REDIRECT_URL = os.getenv("RedirectUrl")
+REDIRECT_URL = os.getenv("RedirectUrl")  # note
 AUTHORIZATION_URL = os.getenv("AuthorizationUrl")
 TOKEN_URL = os.getenv("TokenUrl")
 
