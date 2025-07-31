@@ -5,7 +5,7 @@ This script sets up a simple HTTP server to facilitate OAuth 2.0 authorization c
 It redirects users to an authorization endpoint, receives the authorization code,
 exchanges it for access and refresh tokens, and demonstrates token renewal.
 
-🔧 Setup Instructions:
+Setup Instructions:
 - Create a `.env` file in the same directory with the following variables:
     AppKey=your_app_key_here
     AppSecret=your_app_secret_here
@@ -13,14 +13,15 @@ exchanges it for access and refresh tokens, and demonstrates token renewal.
     AuthorizationUrl=https://example.com/oauth/authorize
     TokenUrl=https://example.com/oauth/token
 
-🧠 How It Works:
+How It Works:
 - The server uses the `RedirectUrl` to determine:
     1. The port it should run on (e.g., `3000` from `http://localhost:3000/callback`)
     2. The path it should listen for (e.g., `/callback`)
 - If no port is specified in the redirect URL, the server defaults to port `3000`.
 - The server logs all key steps and decisions to the console for transparency.
 
-📄 A demo template is provided as `.env.example` to help you get started quickly.
+
+A demo template is provided as `.env.example` to help you get started quickly.
 You can copy it using: `cp .env.example .env` and fill in your credentials.
 
 This script is useful for testing and debugging OAuth integrations locally.
