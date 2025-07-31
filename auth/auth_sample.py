@@ -18,13 +18,12 @@ How It Works:
     1. The port it should run on (e.g., `3000` from `http://localhost:3000/callback`)
     2. The path it should listen for (e.g., `/callback`)
 - If no port is specified in the redirect URL, the server defaults to port `3000`.
-- The server logs all key steps and decisions to the console for transparency.
 
 
 A demo template is provided as `.env.example` to help you get started quickly.
 You can copy it using: `cp .env.example .env` and fill in your credentials.
 
-This script is useful for testing and debugging OAuth integrations locally.
+
 """
 
 import os
