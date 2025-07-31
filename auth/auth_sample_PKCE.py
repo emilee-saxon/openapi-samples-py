@@ -1,3 +1,44 @@
+"""
+OAuth 2.0 Authorization Code Flow with PKCE – Local Server Script
+=================================================================
+
+This script sets up a local HTTP server to support the OAuth 2.0 Authorization Code Flow
+with Proof Key for Code Exchange (PKCE). It's designed for development and testing purposes,
+allowing you to authenticate and retrieve tokens from an OAuth provider using a local redirect URI.
+
+What it does:
+
+- Loads configuration from environment variables:
+  AppKey, RedirectUrl, AuthorizationEndpoint, and TokenUrl.
+- Parses the redirect URI to extract the port and path.
+- Generates a PKCE code verifier and challenge.
+- Constructs the authorization URL and starts a local HTTP server.
+- Redirects to the authorization endpoint.
+- Handles the redirect back with the authorization code.
+- Exchanges the code for access and refresh tokens.
+- Prints token responses to the console.
+
+How to use it:
+
+1. Set the required environment variables in a `.env` file or your shell.
+2. Run the script:
+       python3 auth_sample_PKCE.py
+3. Open a browser and go to `http://localhost:<PORT>/` to start the flow.
+
+Important:
+
+- The `RedirectUrl` must include a non-root path (e.g., `/callback`).
+- Running on port 80 requires root privileges:
+      sudo python3 oauth_pkce_server.py
+
+
+"""
+
+
+
+
+
+
 import os
 import base64
 import hashlib
@@ -25,6 +66,7 @@ parsed = urlparse(config["RedirectUrl"])
 if not parsed.path or parsed.path == "/":
     raise ValueError("RedirectUrl must include a non-root path (e.g., /callback)")
 
+#Extract port, otherwise we set to 80 
 port = parsed.port or 80
 config["PORT"] = port
 config["REDIRECT_PATH"] = parsed.path
@@ -46,6 +88,7 @@ authorization_url = (
     f"response_type=code&client_id={config['AppKey']}&redirect_uri={config['RedirectUrl']}"
     f"&state={state}&code_challenge={code_challenge}&code_challenge_method=S256"
 )
+
 
 print(f"[INFO] Authorization URL:\n{authorization_url}")
 

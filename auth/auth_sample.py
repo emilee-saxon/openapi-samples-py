@@ -1,5 +1,7 @@
 """
 OAuth 2.0 Authorization Code Flow Server
+=================================================================
+
 
 This script sets up a simple HTTP server to facilitate OAuth 2.0 authorization code flow.
 It redirects users to an authorization endpoint, receives the authorization code,
