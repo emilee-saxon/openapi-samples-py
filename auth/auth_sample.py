@@ -15,9 +15,10 @@ Setup Instructions:
 
 How It Works:
 - The server uses the `RedirectUrl` to determine:
-    1. The port it should run on (e.g., `3000` from `http://localhost:3000/callback`)
+    1. The port it should run on (e.g., `3000` from `http://localhost:3000/callback`).
     2. The path it should listen for (e.g., `/callback`)
-- If no port is specified in the redirect URL, the server defaults to port `3000`.
+- If no port is specified in the redirect URL, the server defaults to port `80`.
+
 
 
 A demo template is provided as `.env.example` to help you get started quickly.
@@ -26,12 +27,16 @@ You can copy it using: `cp .env.example .env` and fill in your credentials.
 
 """
 
+
+
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs, urlencode
 from base64 import b64encode
 import requests
 from dotenv import load_dotenv
+
+
 
 # Load and validate environment variables
 def load_config(app=None):
@@ -40,7 +45,7 @@ def load_config(app=None):
 
     load_dotenv()
 
-    required_keys = ["AppKey", "AppSecret", "AuthorizationUrl", "TokenUrl", "RedirectUrl"]
+    required_keys = ["AppKey", "AppSecret", "AuthorizationEndpoint", "TokenUrl", "RedirectUrl"]
     config = {key: os.getenv(key) for key in required_keys}
 
     missing = [key for key, value in config.items() if not value]
@@ -57,8 +62,8 @@ def load_config(app=None):
     if not parsed.path or parsed.path == "/":
         raise ValueError(f"Redirect URL '{config['RedirectUrl']}' must include a non-root path (e.g., /callback).")
 
-    # Determine port: use from URL if present, else default to 3000
-    port = parsed.port or 3000
+    # Determine port: use from URL if present, else default to 80
+    port = parsed.port or 80
     config["PORT"] = port
 
     if not parsed.port:
@@ -68,14 +73,14 @@ def load_config(app=None):
 
     # Log final config (excluding secrets)
     print(f"[INFO] Loaded config with redirect URL: {config['RedirectUrl']}")
-    print(f"[INFO] Authorization URL: {config['AuthorizationUrl']}")
+    print(f"[INFO] Authorization URL: {config['AuthorizationEndpoint']}")
     print(f"[INFO] Token URL: {config['TokenUrl']}")
 
     return {
         "APP_KEY": config["AppKey"],
         "APP_SECRET": config["AppSecret"],
         "REDIRECT_URL": config["RedirectUrl"],
-        "AUTHORIZATION_URL": config["AuthorizationUrl"],
+        "AUTHORIZATION_URL": config["AuthorizationEndpoint"],
         "TOKEN_URL": config["TokenUrl"],
         "PORT": config["PORT"],
     }
@@ -159,6 +164,8 @@ class OAuthHandler(BaseHTTPRequestHandler):
 
 # Start the server using the port derived from the redirect URL
 def run(server_class=HTTPServer, handler_class=OAuthHandler):
+
+
     port = config["PORT"]
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
@@ -167,3 +174,5 @@ def run(server_class=HTTPServer, handler_class=OAuthHandler):
 
 if __name__ == "__main__":
     run()
+
+
