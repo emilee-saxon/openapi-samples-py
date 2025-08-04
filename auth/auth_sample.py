@@ -47,7 +47,7 @@ def load_config(app=None):
 
     load_dotenv()
 
-    required_keys = ["AppKey", "AppSecret", "AuthorizationEndpoint", "TokenUrl", "RedirectUrl"]
+    required_keys = ["AppKey", "AppSecret", "AuthorizationUrl", "TokenUrl", "RedirectUrl"]
     config = {key: os.getenv(key) for key in required_keys}
 
     missing = [key for key, value in config.items() if not value]
@@ -75,14 +75,14 @@ def load_config(app=None):
 
     # Log final config (excluding secrets)
     print(f"[INFO] Loaded config with redirect URL: {config['RedirectUrl']}")
-    print(f"[INFO] Authorization URL: {config['AuthorizationEndpoint']}")
+    print(f"[INFO] Authorization URL: {config['AuthorizationUrl']}")
     print(f"[INFO] Token URL: {config['TokenUrl']}")
 
     return {
         "APP_KEY": config["AppKey"],
         "APP_SECRET": config["AppSecret"],
         "REDIRECT_URL": config["RedirectUrl"],
-        "AUTHORIZATION_URL": config["AuthorizationEndpoint"],
+        "AUTHORIZATION_URL": config["AuthorizationUrl"],
         "TOKEN_URL": config["TokenUrl"],
         "PORT": config["PORT"],
     }
