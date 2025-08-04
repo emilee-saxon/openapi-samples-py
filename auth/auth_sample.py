@@ -59,7 +59,7 @@ def load_config(app=None):
 
     # Validate and extract port from redirect URL
     parsed = urlparse(config["RedirectUrl"])
-
+    print(config)
     # Ensure path is not root
     if not parsed.path or parsed.path == "/":
         raise ValueError(f"Redirect URL '{config['RedirectUrl']}' must include a non-root path (e.g., /callback).")
