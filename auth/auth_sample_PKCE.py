@@ -82,7 +82,7 @@ state = secrets.token_urlsafe(16)
 
 # Construct authorization URL
 authorization_url = (
-    f"{config['AuthorizationEndpoint'].rstrip('/')}?"
+    f"{config['AuthorizationUrl'].rstrip('/')}?"
     f"response_type=code&client_id={config['AppKey']}&redirect_uri={config['RedirectUrl']}"
     f"&state={state}&code_challenge={code_challenge}&code_challenge_method=S256"
 )
@@ -97,11 +97,13 @@ token_url = f"{config['TokenUrl'].rstrip('/')}"
 class OAuthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed_path = urlparse(self.path)
+        print(parsed_path)
         if parsed_path.path == "/":
             self.send_response(302)
             self.send_header("Location", authorization_url)
             self.end_headers()
         elif parsed_path.path == config["REDIRECT_PATH"]:
+
             query = parse_qs(parsed_path.query)
             code = query.get("code", [None])[0]
           
@@ -147,6 +149,11 @@ class OAuthHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"Authorization complete. Check console for token details.")
+        else:
+            print(f"Wrong path: {parsed_path.path}")
+            self.send_response(404)
+            self.end_headers()
+
 
 # Run server
 def run():
