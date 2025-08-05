@@ -59,7 +59,7 @@ missing = [key for key, value in config.items() if not value]
 if missing:
     raise EnvironmentError(f"Missing environment variables: {', '.join(missing)}")
 
-# Extract port and path from RedirectUrl
+# Extract RedirectUrl
 parsed = urlparse(config["RedirectUrl"])
 if parsed.port != None:
     raise ValueError("RedirectUrl must include a non-root path (e.g., /callback)")
