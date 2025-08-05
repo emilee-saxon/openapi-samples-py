@@ -96,7 +96,7 @@ token_url = f"{config['TokenUrl'].rstrip('/')}"
 class OAuthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed_path = urlparse(self.path)
-        print(parsed_path)
+
         if parsed_path.path == "/":
             self.send_response(302)
             self.send_header("Location", authorization_url)
