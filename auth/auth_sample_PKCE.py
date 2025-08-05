@@ -61,12 +61,11 @@ if missing:
 
 # Extract port and path from RedirectUrl
 parsed = urlparse(config["RedirectUrl"])
-if not parsed.path or parsed.path == "/":
+if parsed.port != None:
     raise ValueError("RedirectUrl must include a non-root path (e.g., /callback)")
 
-#Extract port, otherwise we set to 80 
-port = parsed.port or 80
-config["PORT"] = port
+#Port is 80 -- http local host, where the redirect sits on. 
+config["PORT"] = 80
 config["REDIRECT_PATH"] = parsed.path
 
 # Generate PKCE code_verifier and code_challenge
