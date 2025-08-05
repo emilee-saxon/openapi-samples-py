@@ -10,7 +10,7 @@ def get_user(api_url="", bearer_token=""):
 
     # Prompt for API URL if not provided
     if not api_url:
-        api_url = input("Enter the OpenAPI base URL (press Enter to use default): ").strip()
+        api_url = input("Enter the OpenAPI base URL (press Enter to use default - if you're on live use https://gateway.saxobank.com/openapi):  ").strip()
         if not api_url:
             api_url = "https://gateway.saxobank.com/sim/openapi"
             print(f"Using default URL: {api_url}")

@@ -51,7 +51,7 @@ load_dotenv()
 
 
 # Required environment variables
-required_keys = ["AppKey", "RedirectUrl", "AuthorizationEndpoint", "TokenUrl"]
+required_keys = ["AppKey", "RedirectUrl", "AuthorizationUrl", "TokenUrl"]
 config = {key: os.getenv(key) for key in required_keys}
 
 # Validate environment variables
