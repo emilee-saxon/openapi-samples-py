@@ -59,7 +59,7 @@ def load_config(app=None):
 
     # Validate and extract port from redirect URL
     parsed = urlparse(config["RedirectUrl"])
-    print(config)
+
     # Ensure path is not root
     if not parsed.path or parsed.path == "/":
         raise ValueError(f"Redirect URL '{config['RedirectUrl']}' must include a non-root path (e.g., /callback).")
@@ -98,6 +98,10 @@ unpacked_response = {}
 class OAuthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         global unpacked_response
+        global cut_off_time
+
+        cut_off_time = 60 # sets how many seconds before the token expires to refresh it
+
         parsed_path = urlparse(self.path)
         path = parsed_path.path
 
@@ -109,19 +113,32 @@ class OAuthHandler(BaseHTTPRequestHandler):
 
         elif path == urlparse(config["REDIRECT_URL"]).path:
             print("\n[INFO] Requesting tokens...")
-            unpacked_response = self.get_tokens(parsed_path)
+            unpacked_response, refresh_token, renew_time, auth_token_expiry = self.get_tokens(parsed_path)
+
+            self.wfile.write(b"Tokens received. Check console output.")
 
             print("[INFO] Token response:")
             print(unpacked_response)
-            print("[INFO] Will refresh tokens before they expire...")
+            print(f"[INFO] Will refresh tokens {(auth_token_expiry-renew_time)/60} minutes before they expire...")
 
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"Tokens received. Check console output.")
-
-            unpacked_response = self.renew_tokens()
-            print("[INFO] Refresh response:")
-            print(unpacked_response)
+            time.sleep(renew_time)
+            print("[INFO] Performing First Token Refresh...")
+            refresh_response, new_renew_time, new_refresh_token = self.renew_tokens(refresh_token=refresh_token)
+            if not refresh_response.get("refresh_token"):
+                print("[INFO] No new refresh token received. Stopping renewal loop.")
+            print("[INFO] First refresh response:")
+            print(refresh_response)
+               
+            # Renewal loop   
+            while True:
+                time.sleep(new_renew_time) 
+                print("[INFO] Renewing tokens again...")
+                refresh_response, renew_time, new_refresh_token = self.renew_tokens(refresh_token=new_refresh_token)
+                print("[INFO] New refresh response:")
+                print(refresh_response)
+                if not refresh_response.get("refresh_token"):
+                    print("[INFO] No new refresh token received. Stopping renewal loop.")
+                    break              
 
     def get_tokens(self, parsed_path):
         query = parse_qs(parsed_path.query)
@@ -136,36 +153,32 @@ class OAuthHandler(BaseHTTPRequestHandler):
             "redirect_uri": config["REDIRECT_URL"],
         }
 
-        return self.token_request(data)
+        response = self.token_request(data)
 
-    def renew_tokens(self):
-        refresh_token = unpacked_response.get("refresh_token")
-        auth_token_expiry = unpacked_response.get("expires_in")
+        auth_token_expiry = response.get("expires_in")
+        refresh_token = response.get("refresh_token")
 
-        renew_time = auth_token_expiry - 60  # Renew 60 seconds before expiry
+        renew_time = auth_token_expiry - cut_off_time  # refresh will happen before the token expires
+
+        return response, refresh_token, renew_time, auth_token_expiry
+
+
+    def renew_tokens(self, refresh_token):
 
         if not refresh_token:
-            raise ValueError("Missing refresh_token in unpacked_response. Cannot renew tokens.")
+            raise ValueError("Missing refresh_token. Cannot renew tokens.")
 
-        data = {
+        refresh_data = {
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
             "redirect_uri": config["REDIRECT_URL"],
         }
+        renewed = self.token_request(refresh_data)
 
-        # refresh tokens before they expire
-        while True:
-            time.sleep(renew_time)
-            print("[INFO] Attempting to renew tokens...")
-            renewed = self.token_request(data)
-            print("[INFO] Renewed token response:")
-            print(renewed)
-            # Optionally break if token is expired or renewal fails
-            if not renewed.get("refresh_token") or renewed.get("expires_in", 0) <= 0:
-                print("[INFO] Token renewal stopped: no valid refresh_token or token expired.")
-                break
-        
-        return self.token_request(data)
+        new_refresh_token = renewed["refresh_token"]
+        renew_time = renewed["expires_in"] - cut_off_time
+    
+        return renewed, renew_time, new_refresh_token
 
     def token_request(self, data):
         basic_token = b64encode(f"{config['APP_KEY']}:{config['APP_SECRET']}".encode()).decode()
@@ -179,10 +192,9 @@ class OAuthHandler(BaseHTTPRequestHandler):
             return response.json()
         except Exception as e:
             raise ValueError(f"Failed to parse token response: {e}")
-
+        
 # Start the server using the port derived from the redirect URL
 def run(server_class=HTTPServer, handler_class=OAuthHandler):
-
 
     port = config["PORT"]
     server_address = ('', port)
