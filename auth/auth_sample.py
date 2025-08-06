@@ -37,7 +37,7 @@ from urllib.parse import urlparse, parse_qs, urlencode
 from base64 import b64encode
 import requests
 from dotenv import load_dotenv
-
+import time
 
 
 # Load and validate environment variables
@@ -113,15 +113,15 @@ class OAuthHandler(BaseHTTPRequestHandler):
 
             print("[INFO] Token response:")
             print(unpacked_response)
-
-            print("\n[INFO] Renewing tokens...")
-            unpacked_response = self.renew_tokens()
-            print("[INFO] Refresh response:")
-            print(unpacked_response)
+            print("[INFO] Will refresh tokens before they expire...")
 
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"Tokens received and refreshed. Check console output.")
+
+            unpacked_response = self.renew_tokens()
+            print("[INFO] Refresh response:")
+            print(unpacked_response)
 
     def get_tokens(self, parsed_path):
         query = parse_qs(parsed_path.query)
@@ -140,6 +140,10 @@ class OAuthHandler(BaseHTTPRequestHandler):
 
     def renew_tokens(self):
         refresh_token = unpacked_response.get("refresh_token")
+        auth_token_expiry = unpacked_response.get("expires_in")
+
+        renew_time = auth_token_expiry - 60  # Renew 60 seconds before expiry
+
         if not refresh_token:
             raise ValueError("Missing refresh_token in unpacked_response. Cannot renew tokens.")
 
@@ -149,6 +153,18 @@ class OAuthHandler(BaseHTTPRequestHandler):
             "redirect_uri": config["REDIRECT_URL"],
         }
 
+        # refresh tokens before they expire
+        while True:
+            time.sleep(renew_time)
+            print("[INFO] Attempting to renew tokens...")
+            renewed = self.token_request(data)
+            print("[INFO] Renewed token response:")
+            print(renewed)
+            # Optionally break if token is expired or renewal fails
+            if not renewed.get("refresh_token") or renewed.get("expires_in", 0) <= 0:
+                print("[INFO] Token renewal stopped: no valid refresh_token or token expired.")
+                break
+        
         return self.token_request(data)
 
     def token_request(self, data):
