@@ -99,7 +99,9 @@ class OAuthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         global unpacked_response
         global cut_off_time
+
         cut_off_time = 60 # sets how many seconds before the token expires to refresh it
+
         parsed_path = urlparse(self.path)
         path = parsed_path.path
 
@@ -111,18 +113,16 @@ class OAuthHandler(BaseHTTPRequestHandler):
 
         elif path == urlparse(config["REDIRECT_URL"]).path:
             print("\n[INFO] Requesting tokens...")
-            unpacked_response, refresh_token, renew_time = self.get_tokens(parsed_path)
+            unpacked_response, refresh_token, renew_time, auth_token_expiry = self.get_tokens(parsed_path)
+
+            self.wfile.write(b"Tokens received. Check console output.")
 
             print("[INFO] Token response:")
             print(unpacked_response)
-            print(f"[INFO] Will refresh tokens {renew_time/60} minutes before they expire...")
-
-            # self.send_response(200)
-            # self.end_headers()
-            # self.wfile.write(b"Tokens received. Check console output.")
+            print(f"[INFO] Will refresh tokens {(auth_token_expiry-renew_time)/60} minutes before they expire...")
 
             time.sleep(renew_time)
-            print("[INFO] First Token Refresh...")
+            print("[INFO] Performing First Token Refresh...")
             refresh_response, new_renew_time, new_refresh_token = self.renew_tokens(refresh_token=refresh_token)
             if not refresh_response.get("refresh_token"):
                 print("[INFO] No new refresh token received. Stopping renewal loop.")
@@ -132,9 +132,9 @@ class OAuthHandler(BaseHTTPRequestHandler):
             # Renewal loop   
             while True:
                 time.sleep(new_renew_time) 
-                print("[INFO] Renewing tokens...")
+                print("[INFO] Renewing tokens again...")
                 refresh_response, renew_time, new_refresh_token = self.renew_tokens(refresh_token=new_refresh_token)
-                print("[INFO] Refresh response:")
+                print("[INFO] New refresh response:")
                 print(refresh_response)
                 if not refresh_response.get("refresh_token"):
                     print("[INFO] No new refresh token received. Stopping renewal loop.")
@@ -158,9 +158,9 @@ class OAuthHandler(BaseHTTPRequestHandler):
         auth_token_expiry = response.get("expires_in")
         refresh_token = response.get("refresh_token")
 
-        renew_time = auth_token_expiry - cut_off_time  # First refresh will happen 1 min before expiry
+        renew_time = auth_token_expiry - cut_off_time  # refresh will happen before the token expires
 
-        return response, refresh_token, renew_time
+        return response, refresh_token, renew_time, auth_token_expiry
 
 
     def renew_tokens(self, refresh_token):
@@ -177,7 +177,6 @@ class OAuthHandler(BaseHTTPRequestHandler):
 
         new_refresh_token = renewed["refresh_token"]
         renew_time = renewed["expires_in"] - cut_off_time
-
     
         return renewed, renew_time, new_refresh_token
 
@@ -194,11 +193,8 @@ class OAuthHandler(BaseHTTPRequestHandler):
         except Exception as e:
             raise ValueError(f"Failed to parse token response: {e}")
         
-        
-
 # Start the server using the port derived from the redirect URL
 def run(server_class=HTTPServer, handler_class=OAuthHandler):
-
 
     port = config["PORT"]
     server_address = ('', port)
