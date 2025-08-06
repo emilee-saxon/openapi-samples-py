@@ -117,7 +117,7 @@ class OAuthHandler(BaseHTTPRequestHandler):
 
             self.send_response(200)
             self.end_headers()
-            self.wfile.write(b"Tokens received and refreshed. Check console output.")
+            self.wfile.write(b"Tokens received. Check console output.")
 
             unpacked_response = self.renew_tokens()
             print("[INFO] Refresh response:")
