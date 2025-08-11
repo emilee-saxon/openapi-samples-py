@@ -27,9 +27,11 @@ How to use it:
 
 Important:
 
-- The `RedirectUrl` must include a non-root path (e.g., `/callback`).
-- Running on port 80 requires root privileges:
-      sudo python3 oauth_pkce_server.py
+- Within the application registration, the `RedirectUrl` must include a non-root path (e.g., `http://localhost/test`).
+- The redirect URL can have a path specified within the .env file, such as `http://localhost:8000/test`.
+- If not specified in the .env file, the default port is set to 80. 
+    - Running on port 80 requires root privileges:
+        sudo python3 oauth_pkce_server.py
 
 
 """
@@ -59,13 +61,11 @@ missing = [key for key, value in config.items() if not value]
 if missing:
     raise EnvironmentError(f"Missing environment variables: {', '.join(missing)}")
 
-# Extract RedirectUrl
+# Extract RedirectUrl and port 
 parsed = urlparse(config["RedirectUrl"])
-if parsed.port != None:
-    raise ValueError("RedirectUrl must include a non-root path (e.g., /callback)")
 
-#Port is 80 -- http local host, where the redirect sits on. 
-config["PORT"] = 80
+#Default port is 80 -- http local host, where the redirect sits on. 
+config["PORT"] = parsed.port if parsed.port else 80
 config["REDIRECT_PATH"] = parsed.path
 
 # Generate PKCE code_verifier and code_challenge
